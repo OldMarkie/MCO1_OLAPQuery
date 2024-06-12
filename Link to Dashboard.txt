@@ -1,0 +1,5 @@
+https://public.tableau.com/app/profile/alejandro.gabriel.santos/viz/MovieAnalyticsBoxOfficeRoll-Up/Dashboard1
+https://public.tableau.com/app/profile/alejandro.gabriel.santos/viz/MovieAnalyticsBoxOfficeDrill-Down/Dashboard2
+https://public.tableau.com/app/profile/alejandro.gabriel.santos/viz/MovieAnalyticsBoxOfficeSlice/Dashboard3
+https://public.tableau.com/app/profile/alejandro.gabriel.santos/viz/MovieAnalyticsBoxOfficeDice/Dashboard4
+https://public.tableau.com/app/profile/alejandro.gabriel.santos/viz/MovieAnalyticsBoxOfficePivot/Dashboard5
