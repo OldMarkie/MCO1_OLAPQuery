@@ -38,17 +38,25 @@ def fetch_data(query):
         messagebox.showerror("Error", f"Error: {err}")
         return None
 
+# Function to autofit the column widths
+def autofit_columns(tree, data_frame):
+    for col in data_frame.columns:
+        max_len = max(data_frame[col].astype(str).map(len).max(), len(col)) + 2
+        tree.column(col, width=max_len * 7)  # Adjusting the multiplier as needed
+
 # Function to populate the Treeview with data
 def populate_treeview(tree, data_frame):
     # Clear any existing data in the tree
     tree.delete(*tree.get_children())
 
     if data_frame is not None:
-        tree["column"] = list(data_frame.columns)
+        tree["columns"] = list(data_frame.columns)
         tree["show"] = "headings"
 
         for column in tree["columns"]:
             tree.heading(column, text=column)
+        
+        autofit_columns(tree, data_frame)
 
         for row in data_frame.itertuples(index=False):
             tree.insert("", tk.END, values=row)
@@ -250,15 +258,14 @@ def query2_5():
     query = """
     SELECT
         fm.Title,
-        SUM(CASE WHEN
-        fmc.ActorID = 'A0001' THEN fmc.Salary ELSE 0 END) AS AngelinaJolie,
+        SUM(CASE WHEN fmc.ActorID = 'A0001' THEN fmc.Salary ELSE 0 END) AS AngelinaJolie,
         SUM(CASE WHEN fmc.ActorID = 'A0002' THEN fmc.Salary ELSE 0 END) AS BradPitt,
         SUM(CASE WHEN fmc.ActorID = 'A0003' THEN fmc.Salary ELSE 0 END) AS JohnnyDepp,
         SUM(CASE WHEN fmc.ActorID = 'A0004' THEN fmc.Salary ELSE 0 END) AS WillSmith,
         SUM(CASE WHEN fmc.ActorID = 'A0005' THEN fmc.Salary ELSE 0 END) AS TomCruise,
         SUM(CASE WHEN fmc.ActorID = 'A0006' THEN fmc.Salary ELSE 0 END) AS JuliaRoberts,
         SUM(CASE WHEN fmc.ActorID = 'A0007' THEN fmc.Salary ELSE 0 END) AS ChristianBale,
-        SUM(CASE WHEN fmc.ActorID = 'A0008' THEN fmc.Salary ELSE 0 END) AS OrlandoBloom,
+        SUM(CASE WHEN fmc.ActorID = 'A0008' THEN fmc.Salary ELSE 0 END) AS LeonardoDiCaprio,
         SUM(CASE WHEN fmc.ActorID = 'A0009' THEN fmc.Salary ELSE 0 END) AS CateBlanchett,
         SUM(CASE WHEN fmc.ActorID = 'A0010' THEN fmc.Salary ELSE 0 END) AS RussellCrowe,
         SUM(CASE WHEN fmc.ActorID = 'A0011' THEN fmc.Salary ELSE 0 END) AS KeiraKnightly,
@@ -278,138 +285,74 @@ def query2_5():
     if df is not None:
         populate_treeview(tree, df)
 
-def query3_1():
-    query = """
-    SELECT
-        fm.Title,
-        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
-    FROM
-        factmoviereview fmr
-    JOIN
-        factmovie fm ON fmr.MovieID = fm.MovieID
-    GROUP BY
-        fm.Title
-    """
-    df = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df)
-
-def query3_2():
-    query = """
-    SELECT
-        dr.ReviewerClass,
-        fm.MovieRating,
-        fm.Genre,
-        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
-    FROM
-        factmoviereview fmr
-    JOIN
-        factmovie fm ON fmr.MovieID = fm.MovieID
-    JOIN
-        dimreviewer dr ON fmr.ReviewerID = dr.ReviewerID
-    GROUP BY
-        dr.ReviewerClass, fm.MovieRating, fm.Genre
-    """
-    df = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df)
-
-def query3_3():
-    query = """
-    SELECT
-        fm.Title,
-        fm.MovieRating,
-        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
-    FROM
-        factmoviereview fmr
-    JOIN
-        factmovie fm ON fmr.MovieID = fm.MovieID
-    WHERE
-        fm.MovieRating = 'R'
-    GROUP BY
-        fm.Title, fm.MovieRating
-    """
-    df = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df)
-
-def query3_4():
-    query = """
-    SELECT
-        fm.Title,
-        fm.MovieRating,
-        fm.Genre,
-        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
-    FROM
-        factmoviereview fmr
-    JOIN
-        factmovie fm ON fmr.MovieID = fm.MovieID
-    WHERE
-        fm.MovieRating = 'R'
-    AND
-        fm.Genre = 'Thriller'
-    GROUP BY
-        fm.Title, fm.MovieRating, fm.Genre
-    """
-    df = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df)
-
-def query3_5():
-    query = """
-    SELECT
-        fm.Title,
-        SUM(CASE WHEN fmr.ReviewerID = 'R-001' THEN fmr.ReviewRating ELSE 0 END) AS RogerEbert,
-        SUM(CASE WHEN fmr.ReviewerID = 'R-002' THEN fmr.ReviewRating ELSE 0 END) AS KennethTuran,
-        SUM(CASE WHEN fmr.ReviewerID = 'R-003' THEN fmr.ReviewRating ELSE 0 END) AS DavidAnsen,
-        SUM(CASE WHEN fmr.ReviewerID = 'R-004' THEN fmr.ReviewRating ELSE 0 END) AS PeterTravers,
-        SUM(CASE WHEN fmr.ReviewerID = 'R-005' THEN fmr.ReviewRating ELSE 0 END) AS AnthonyScott
-    FROM
-        factmoviereview fmr
-    JOIN
-        dimreviewer dr ON fmr.ReviewerID = dr.ReviewerID
-    JOIN
-        factmovie fm ON fmr.MovieID = fm.MovieID
-    GROUP BY
-        fm.Title
-    """
-    df = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df)
-
 # Main function to create the GUI
 def main():
-    global tree
-
-    # Create the main window
     root = tk.Tk()
-    root.title("MySQL Query Table Data")
+    root.title("Movie OLAP Query Interface")
 
-    # Create buttons for each query
-    button_frame = tk.Frame(root)
-    button_frame.pack(pady=10)
+    notebook = ttk.Notebook(root)
+    notebook.pack(pady=10, expand=True)
 
-    tk.Button(button_frame, text="Query 1.1", command=query1_1).grid(row=0, column=0, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 1.2", command=query1_2).grid(row=0, column=1, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 1.3", command=query1_3).grid(row=0, column=2, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 1.4", command=query1_4).grid(row=0, column=3, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 1.5", command=query1_5).grid(row=0, column=4, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 2.1", command=query2_1).grid(row=1, column=0, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 2.2", command=query2_2).grid(row=1, column=1, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 2.3", command=query2_3).grid(row=1, column=2, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 2.4", command=query2_4).grid(row=1, column=3, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 2.5", command=query2_5).grid(row=1, column=4, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 3.1", command=query3_1).grid(row=2, column=0, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 3.2", command=query3_2).grid(row=2, column=1, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 3.3", command=query3_3).grid(row=2, column=2, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 3.4", command=query3_4).grid(row=2, column=3, padx=5, pady=5)
-    tk.Button(button_frame, text="Query 3.5", command=query3_5).grid(row=2, column=4, padx=5, pady=5)
+    frame1 = ttk.Frame(notebook, width=800, height=400)
+    frame2 = ttk.Frame(notebook, width=800, height=400)
 
-    # Create the Treeview widget
-    tree = ttk.Treeview(root)
-    tree.pack(fill=tk.BOTH, expand=True)
+    frame1.pack(fill="both", expand=True)
+    frame2.pack(fill="both", expand=True)
+
+    notebook.add(frame1, text="Movie Box Office Analysis")
+    notebook.add(frame2, text="Actor Salary Analysis")
+
+    global tree
+    tree_frame = ttk.Frame(root)
+    tree_frame.pack(pady=10, fill="both", expand=True)
+
+    # Creating a Treeview widget
+    tree = ttk.Treeview(tree_frame)
+    tree.pack(side="left", fill="both", expand=True)
+
+    # Adding scrollbars
+    tree_scroll_y = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+    tree_scroll_y.pack(side="right", fill="y")
+
+    tree_scroll_x = ttk.Scrollbar(tree_frame, orient="horizontal", command=tree.xview)
+    tree_scroll_x.pack(side="bottom", fill="x")
+
+    tree.configure(yscrollcommand=tree_scroll_y.set, xscrollcommand=tree_scroll_x.set)
+
+    # Creating labels and buttons for Frame 1 (Movie Box Office Analysis)
+    queries1 = [
+        ("Box Office by Genre and Location", query1_1),
+        ("Box Office by Location, Theater, Genre, and Title", query1_2),
+        ("Box Office for R-rated Movies by Title", query1_3),
+        ("Box Office for R-rated Movies in New York", query1_4),
+        ("Box Office for Titles in Various Cities", query1_5),
+    ]
+
+    for idx, (label_text, command) in enumerate(queries1):
+        label = ttk.Label(frame1, text=label_text)
+        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
+
+        button = ttk.Button(frame1, text="Run Query", command=command)
+        button.grid(row=idx, column=1, padx=10, pady=5)
+
+    # Creating labels and buttons for Frame 2 (Actor Salary Analysis)
+    queries2 = [
+        ("Total Salary by Agent and Gender", query2_1),
+        ("Total Salary by Gender, Nationality, and Agent", query2_2),
+        ("Total Salary for American Actors by Name", query2_3),
+        ("Total Salary for American Actors by Agent", query2_4),
+        ("Salary for Specific Actors by Movie Title", query2_5),
+    ]
+
+    for idx, (label_text, command) in enumerate(queries2):
+        label = ttk.Label(frame2, text=label_text)
+        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
+
+        button = ttk.Button(frame2, text="Run Query", command=command)
+        button.grid(row=idx, column=1, padx=10, pady=5)
 
     root.mainloop()
 
 if __name__ == "__main__":
     main()
+
