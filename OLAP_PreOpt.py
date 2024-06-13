@@ -285,6 +285,105 @@ def query2_5():
     if df is not None:
         populate_treeview(tree, df)
 
+def query3_1():
+    query = """
+    SELECT
+        fm.Title,
+        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
+    FROM
+        factmoviereview fmr
+    JOIN
+        factmovie fm ON fmr.MovieID = fm.MovieID
+    GROUP BY
+        fm.Title
+    """
+    df = fetch_data(query)
+    if df is not None:
+        populate_treeview(tree, df)
+
+def query3_2():
+    query = """
+    SELECT
+        dr.ReviewerClass,
+        fm.MovieRating,
+        fm.Genre,
+        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
+    FROM
+        factmoviereview fmr
+    JOIN
+        factmovie fm ON fmr.MovieID = fm.MovieID
+    JOIN
+        dimreviewer dr ON fmr.ReviewerID = dr.ReviewerID
+    GROUP BY
+        dr.ReviewerClass, fm.MovieRating, fm.Genre
+    """
+    df = fetch_data(query)
+    if df is not None:
+        populate_treeview(tree, df)
+
+def query3_3():
+    query = """
+    SELECT
+        fm.Title,
+        fm.MovieRating,
+        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
+    FROM
+        factmoviereview fmr
+    JOIN
+        factmovie fm ON fmr.MovieID = fm.MovieID
+    WHERE
+        fm.MovieRating = 'R'
+    GROUP BY
+        fm.Title, fm.MovieRating
+    """
+    df = fetch_data(query)
+    if df is not None:
+        populate_treeview(tree, df)
+
+def query3_4():
+    query = """
+    SELECT
+        fm.Title,
+        fm.MovieRating,
+        fm.Genre,
+        ROUND(AVG(fmr.ReviewRating), 1) AS OverallRating
+    FROM
+        factmoviereview fmr
+    JOIN
+        factmovie fm ON fmr.MovieID = fm.MovieID
+    WHERE
+        fm.MovieRating = 'R'
+    AND
+        fm.Genre = 'Thriller'
+    GROUP BY
+        fm.Title, fm.MovieRating, fm.Genre
+    """
+    df = fetch_data(query)
+    if df is not None:
+        populate_treeview(tree, df)
+
+def query3_5():
+    query = """
+    SELECT
+        fm.Title,
+        SUM(CASE WHEN fmr.ReviewerID = 'R-001' THEN fmr.ReviewRating ELSE 0 END) AS RogerEbert,
+        SUM(CASE WHEN fmr.ReviewerID = 'R-002' THEN fmr.ReviewRating ELSE 0 END) AS KennethTuran,
+        SUM(CASE WHEN fmr.ReviewerID = 'R-003' THEN fmr.ReviewRating ELSE 0 END) AS DavidAnsen,
+        SUM(CASE WHEN fmr.ReviewerID = 'R-004' THEN fmr.ReviewRating ELSE 0 END) AS PeterTravers,
+        SUM(CASE WHEN fmr.ReviewerID = 'R-005' THEN fmr.ReviewRating ELSE 0 END) AS AnthonyScott
+    FROM
+        factmoviereview fmr
+    JOIN
+        dimreviewer dr ON fmr.ReviewerID = dr.ReviewerID
+    JOIN
+        factmovie fm ON fmr.MovieID = fm.MovieID
+    GROUP BY
+        fm.Title
+    """
+    df = fetch_data(query)
+    if df is not None:
+        populate_treeview(tree, df)
+
 # Main function to create the GUI
 def main():
     root = tk.Tk()
@@ -314,10 +413,7 @@ def main():
     tree_scroll_y = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
     tree_scroll_y.pack(side="right", fill="y")
 
-    tree_scroll_x = ttk.Scrollbar(tree_frame, orient="horizontal", command=tree.xview)
-    tree_scroll_x.pack(side="bottom", fill="x")
-
-    tree.configure(yscrollcommand=tree_scroll_y.set, xscrollcommand=tree_scroll_x.set)
+    tree.configure(yscrollcommand=tree_scroll_y.set)
 
     # Creating labels and buttons for Frame 1 (Movie Box Office Analysis)
     queries1 = [
@@ -351,8 +447,27 @@ def main():
         button = ttk.Button(frame2, text="Run Query", command=command)
         button.grid(row=idx, column=1, padx=10, pady=5)
 
+    # Creating labels and buttons for Frame 3 (Movie Rating Analysis)
+    queries3 = [
+        ("Overall Rating by Movie Title", query3_1),
+        ("Rating by Reviewer Class, Movie Rating, and Genre", query3_2),
+        ("Rating for R-rated Movies by Title", query3_3),
+        ("Rating for R-rated Thriller Movies by Title", query3_4),
+        ("Rating by Reviewer and Movie Title", query3_5),
+    ]
+
+    frame3 = ttk.Frame(notebook, width=800, height=400)
+    frame3.pack(fill="both", expand=True)
+    notebook.add(frame3, text="Movie Rating Analysis")
+
+    for idx, (label_text, command) in enumerate(queries3):
+        label = ttk.Label(frame3, text=label_text)
+        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
+
+        button = ttk.Button(frame3, text="Run Query", command=command)
+        button.grid(row=idx, column=1, padx=10, pady=5)
+
     root.mainloop()
 
 if __name__ == "__main__":
     main()
-
