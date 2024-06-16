@@ -2,6 +2,7 @@ import mysql.connector
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk, messagebox
+import time
 
 # Function to fetch data from the database based on the query
 def fetch_data(query):
@@ -17,11 +18,20 @@ def fetch_data(query):
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
 
+        # Measure start time
+        start_time = time.time()
+
         # Execute the query
         cursor.execute(query)
 
         # Fetch all rows from the executed query
         rows = cursor.fetchall()
+
+        # Measure end time
+        end_time = time.time()
+
+        # Calculate the total runtime
+        runtime = end_time - start_time
 
         # Get column names
         column_names = [i[0] for i in cursor.description]
@@ -33,10 +43,10 @@ def fetch_data(query):
         cursor.close()
         conn.close()
 
-        return df
+        return df, runtime
     except mysql.connector.Error as err:
         messagebox.showerror("Error", f"Error: {err}")
-        return None
+        return None, None
 
 # Function to autofit the column widths
 def autofit_columns(tree, data_frame):
@@ -45,7 +55,7 @@ def autofit_columns(tree, data_frame):
         tree.column(col, width=max_len * 7)  # Adjusting the multiplier as needed
 
 # Function to populate the Treeview with data
-def populate_treeview(tree, data_frame):
+def populate_treeview(tree, data_frame, runtime):
     # Clear any existing data in the tree
     tree.delete(*tree.get_children())
 
@@ -55,11 +65,14 @@ def populate_treeview(tree, data_frame):
 
         for column in tree["columns"]:
             tree.heading(column, text=column)
-        
+
         autofit_columns(tree, data_frame)
 
         for row in data_frame.itertuples(index=False):
             tree.insert("", tk.END, values=row)
+
+    # Display runtime
+    runtime_label.config(text=f"Query executed in {runtime:.6f} seconds")
 
 # Individual functions to execute each query
 def query1_1():
@@ -77,9 +90,9 @@ def query1_1():
     GROUP BY
         fm.Genre, dt.Location
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query1_2():
     query = """
@@ -98,9 +111,9 @@ def query1_2():
     GROUP BY
         dt.Location, dt.TheaterName, fm.Genre, fm.Title
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query1_3():
     query = """
@@ -117,9 +130,9 @@ def query1_3():
     GROUP BY
         fm.Title, fm.MovieRating
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query1_4():
     query = """
@@ -141,9 +154,9 @@ def query1_4():
     GROUP BY
         fm.Title, fm.MovieRating, dt.Location
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query1_5():
     query = """
@@ -168,9 +181,9 @@ def query1_5():
     GROUP BY
         fm.Title
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query2_1():
     query = """
@@ -187,9 +200,9 @@ def query2_1():
     GROUP BY
         dage.AgentName, dact.Gender
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query2_2():
     query = """
@@ -207,9 +220,9 @@ def query2_2():
     GROUP BY
         dact.Gender, dact.Nationality, dage.AgentName
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query2_3():
     query = """
@@ -226,9 +239,9 @@ def query2_3():
     GROUP BY
         dact.ActorName, dact.Nationality
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query2_4():
     query = """
@@ -250,9 +263,9 @@ def query2_4():
     GROUP BY
         dact.ActorName, dact.Nationality, dage.AgentName
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query2_5():
     query = """
@@ -281,9 +294,9 @@ def query2_5():
     GROUP BY
         fm.Title
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query3_1():
     query = """
@@ -297,9 +310,9 @@ def query3_1():
     GROUP BY
         fm.Title
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query3_2():
     query = """
@@ -317,9 +330,9 @@ def query3_2():
     GROUP BY
         dr.ReviewerClass, fm.MovieRating, fm.Genre
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query3_3():
     query = """
@@ -336,9 +349,9 @@ def query3_3():
     GROUP BY
         fm.Title, fm.MovieRating
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query3_4():
     query = """
@@ -358,9 +371,9 @@ def query3_4():
     GROUP BY
         fm.Title, fm.MovieRating, fm.Genre
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 def query3_5():
     query = """
@@ -380,9 +393,9 @@ def query3_5():
     GROUP BY
         fm.Title
     """
-    df = fetch_data(query)
+    df, runtime = fetch_data(query)
     if df is not None:
-        populate_treeview(tree, df)
+        populate_treeview(tree, df, runtime)
 
 # Main function to create the GUI
 def main():
@@ -394,12 +407,15 @@ def main():
 
     frame1 = ttk.Frame(notebook, width=800, height=400)
     frame2 = ttk.Frame(notebook, width=800, height=400)
+    frame3 = ttk.Frame(notebook, width=800, height=400)
 
     frame1.pack(fill="both", expand=True)
     frame2.pack(fill="both", expand=True)
+    frame3.pack(fill="both", expand=True)
 
     notebook.add(frame1, text="Movie Box Office Analysis")
     notebook.add(frame2, text="Actor Salary Analysis")
+    notebook.add(frame3, text="Movie Rating Analysis")
 
     global tree
     tree_frame = ttk.Frame(root)
@@ -414,6 +430,11 @@ def main():
     tree_scroll_y.pack(side="right", fill="y")
 
     tree.configure(yscrollcommand=tree_scroll_y.set)
+
+    # Label to display runtime
+    global runtime_label
+    runtime_label = ttk.Label(root, text="")
+    runtime_label.pack()
 
     # Creating labels and buttons for Frame 1 (Movie Box Office Analysis)
     queries1 = [
@@ -456,10 +477,6 @@ def main():
         ("Rating by Reviewer and Movie Title", query3_5),
     ]
 
-    frame3 = ttk.Frame(notebook, width=800, height=400)
-    frame3.pack(fill="both", expand=True)
-    notebook.add(frame3, text="Movie Rating Analysis")
-
     for idx, (label_text, command) in enumerate(queries3):
         label = ttk.Label(frame3, text=label_text)
         label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
@@ -469,5 +486,8 @@ def main():
 
     root.mainloop()
 
+# Run the GUI
 if __name__ == "__main__":
     main()
+
+
