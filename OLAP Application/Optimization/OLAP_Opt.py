@@ -2,6 +2,8 @@ import mysql.connector
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk, messagebox
+import matplotlib.pyplot as plt
+import numpy as np
 import time
 
 # Predefined temporary tables
@@ -344,7 +346,6 @@ def fetch_data(query):
         # Establish the connection
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
-        
 
         # Create temporary tables
         for table in TEMP_TABLES:
@@ -405,6 +406,10 @@ def populate_treeview(tree, data_frame, runtime):
 
     # Display runtime
     runtime_label.config(text=f"Query executed in {runtime:.6f} seconds")
+
+    # Display graph button
+    graph_button.config(state=tk.NORMAL)
+    graph_button.data_frame = data_frame  # Attach data to the button for later use
 
 # Individual functions to execute each query
 def query1_1():
@@ -632,8 +637,29 @@ def query3_5():
         populate_treeview(tree, df, runtime)
 
 
+def show_graph_options(data_frame):
+    graph_window = tk.Toplevel()
+    graph_window.title("Graph Options")
+
+    def generate_graph(graph_type):
+        plt.figure()
+
+        if graph_type == "Bar Chart":
+            data_frame.plot(kind='bar', x=data_frame.columns[0], y=data_frame.columns[1:])
+        else:
+            messagebox.showerror("Error", "Unknown graph type!")
+
+        plt.show()
+
+    bar_chart_btn = ttk.Button(graph_window, text="Bar Chart", command=lambda: generate_graph("Bar Chart"))
+
+    bar_chart_btn.pack(pady=10)
+
 # Main function to create the GUI
 def main():
+    global tree
+    global runtime_label
+    global graph_button
 
     root = tk.Tk()
     root.title("Movie OLAP Query Interface v2")
@@ -653,7 +679,6 @@ def main():
     notebook.add(frame2, text="Actor Salary Analysis")
     notebook.add(frame3, text="Movie Rating Analysis")
 
-    global tree
     tree_frame = ttk.Frame(root)
     tree_frame.pack(pady=10, fill="both", expand=True)
 
@@ -668,9 +693,12 @@ def main():
     tree.configure(yscrollcommand=tree_scroll_y.set)
 
     # Label to display runtime
-    global runtime_label
     runtime_label = ttk.Label(root, text="")
     runtime_label.pack()
+
+   # Button to display graphs
+    graph_button = ttk.Button(root, text="Show Graphs", state=tk.DISABLED, command=lambda: show_graph_options(graph_button.data_frame))
+    graph_button.pack(pady=5)
 
     # Creating labels and buttons for Frame 1 (Movie Box Office Analysis)
     queries1 = [
@@ -725,5 +753,4 @@ def main():
 # Run the GUI
 if __name__ == "__main__":
     main()
-
 
