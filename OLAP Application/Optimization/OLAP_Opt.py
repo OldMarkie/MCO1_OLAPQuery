@@ -1,9 +1,10 @@
 import mysql.connector
 import pandas as pd
-import tkinter as tk
-from tkinter import ttk, messagebox
-import matplotlib.pyplot as plt
-import numpy as np
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
+import plotly.express as px
 import time
 
 # Predefined temporary tables
@@ -329,87 +330,29 @@ TEMP_TABLES = [
     """
 ]
 
-
-
-
-# Function to fetch data from the database based on the query
+# Define a function to fetch data based on a query
 def fetch_data(query):
-    config = {
+    # Database connection details
+    db_config = {
         'user': 'root',
         'password': 'password',
         'host': 'localhost',
-        'database': 'movieopt',
-        'sql_mode': 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION',
+        'database': 'movieopt'
     }
+    
+    start_time = time.time()
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
 
-    try:
-        # Establish the connection
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
-
-        # Create temporary tables
-        for table in TEMP_TABLES:
-            cursor.execute(table)
-
-        # Measure start time
-        start_time = time.time()
-
-        # Execute the query
-        cursor.execute(query)
-
-        # Fetch all rows from the executed query
-        rows = cursor.fetchall()
-
-        # Measure end time
-        end_time = time.time()
-
-        # Calculate the total runtime
-        runtime = end_time - start_time
-
-        # Get column names
-        column_names = [i[0] for i in cursor.description]
-
-        # Create a DataFrame
-        df = pd.DataFrame(rows, columns=column_names)
-
-        # Close the cursor and connection
-        cursor.close()
-        conn.close()
-
-        return df, runtime
-    except mysql.connector.Error as err:
-        messagebox.showerror("Error", f"Error: {err}")
-        return None, None
-
-# Function to autofit the column widths
-def autofit_columns(tree, data_frame):
-    for col in data_frame.columns:
-        max_len = max(data_frame[col].astype(str).map(len).max(), len(col)) + 2
-        tree.column(col, width=max_len * 7)  # Adjusting the multiplier as needed
-
-# Function to populate the Treeview with data
-def populate_treeview(tree, data_frame, runtime):
-    # Clear any existing data in the tree
-    tree.delete(*tree.get_children())
-
-    if data_frame is not None:
-        tree["columns"] = list(data_frame.columns)
-        tree["show"] = "headings"
-
-        for column in tree["columns"]:
-            tree.heading(column, text=column)
-
-        autofit_columns(tree, data_frame)
-
-        for row in data_frame.itertuples(index=False):
-            tree.insert("", tk.END, values=row)
-
-    # Display runtime
-    runtime_label.config(text=f"Query executed in {runtime:.6f} seconds")
-
-    # Display graph button
-    graph_button.config(state=tk.NORMAL)
-    graph_button.data_frame = data_frame  # Attach data to the button for later use
+    # Create temporary tables
+    for table in TEMP_TABLES:
+        cursor.execute(table)
+        
+    df = pd.read_sql(query, conn)
+    conn.close()
+    end_time = time.time()
+    execution_time = end_time - start_time
+    return df, execution_time
 
 # Individual functions to execute each query
 def query1_1():
@@ -421,9 +364,7 @@ def query1_1():
     FROM
         temp_genre_location_boxoffice;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query1_2():
     query = """
@@ -436,9 +377,7 @@ def query1_2():
     FROM
         temp_location_theater_genre_title;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query1_3():
     query = """
@@ -449,9 +388,7 @@ def query1_3():
     FROM
         temp_r_rated_title_boxoffice;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query1_4():
     query = """
@@ -463,9 +400,7 @@ def query1_4():
     FROM
         temp_r_rated_ny_boxoffice;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query1_5():
     query = """
@@ -484,9 +419,7 @@ def query1_5():
     FROM
         temp_titles_cities_boxoffice;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query2_1():
     query = """
@@ -497,9 +430,7 @@ def query2_1():
     FROM
         temp_salary_agent_gender;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query2_2():
     query = """
@@ -511,9 +442,7 @@ def query2_2():
     FROM
         temp_salary_gender_nationality_agent;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query2_3():
     query = """
@@ -524,9 +453,7 @@ def query2_3():
     FROM
         temp_salary_american_actors;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query2_4():
     query = """
@@ -538,9 +465,7 @@ def query2_4():
     FROM
         temp_salary_american_actors_agent;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query2_5():
     query = """
@@ -563,9 +488,7 @@ def query2_5():
     FROM
         temp_salary_specific_actors;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query3_1():
     query = """
@@ -575,9 +498,7 @@ def query3_1():
     FROM
         temp_rating_movie_title;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query3_2():
     query = """
@@ -589,9 +510,7 @@ def query3_2():
     FROM
         temp_rating_reviewer_class_movie_rating_genre;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query3_3():
     query = """
@@ -602,9 +521,7 @@ def query3_3():
     FROM
         temp_rating_r_rated_title;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query3_4():
     query = """
@@ -616,9 +533,7 @@ def query3_4():
     FROM
         temp_rating_r_thriller_title;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
 
 def query3_5():
     query = """
@@ -632,125 +547,131 @@ def query3_5():
     FROM
         temp_rating_reviewer_movie_title;
     """
-    df, runtime = fetch_data(query)
-    if df is not None:
-        populate_treeview(tree, df, runtime)
+    return query
+
+# Initialize the Dash app
+app = dash.Dash(__name__)
+
+# Update the layout of your app to include a div element for displaying the graph
+app.layout = html.Div([
+    dcc.Dropdown(
+        id='query-dropdown',
+        options=[
+            {'label': 'Query 1_1: Total Box Office by Genre and Location', 'value': 'query1_1'},
+            {'label': 'Query 1_2: Total Box Office by Theater, Genre, and Title', 'value': 'query1_2'},
+            {'label': 'Query 1_3: Total Box Office for R-Rated Movies by Title', 'value': 'query1_3'},
+            {'label': 'Query 1_4: Total Box Office for R-Rated Movies in New York by Title', 'value': 'query1_4'},
+            {'label': 'Query 1_5: Total Box Office by Movie and Location', 'value': 'query1_5'},
+            {'label': 'Query 2_1: Total Salary by Agent and Gender', 'value': 'query2_1'},
+            {'label': 'Query 2_2: Total Salary by Nationality and Gender', 'value': 'query2_2'},
+            {'label': 'Query 2_3: Total Salary for American Actors by Name', 'value': 'query2_3'},
+            {'label': 'Query 2_4: Total Salary for American Actors Represented by Creative Artists', 'value': 'query2_4'},
+            {'label': 'Query 2_5: Total Salary by Movie and Actor', 'value': 'query2_5'},
+            {'label': 'Query 3_1: Overall Movie Ratings', 'value': 'query3_1'},
+            {'label': 'Query 3_2: Overall Movie Ratings by Reviewer Class, Movie Rating, and Genre', 'value': 'query3_2'},
+            {'label': 'Query 3_3: Overall Movie Ratings for R-Rated Movies by Title', 'value': 'query3_3'},
+            {'label': 'Query 3_4: Overall Movie Ratings for R-Rated Thriller Movies by Title', 'value': 'query3_4'},
+            {'label': 'Query 3_5: Overall Movie Ratings by Reviewer', 'value': 'query3_5'}
+        ],
+        value='query1_1',
+        multi=False
+    ),
+    dcc.Graph(id='result-graph'),
+    html.Div(id='query-result')
+])
+
+# Add a callback to update the graph when the dropdown value changes
+@app.callback(
+    [Output('result-graph', 'figure'),
+     Output('query-result', 'children')],
+    [Input('query-dropdown', 'value')]
+)
+def update_graph(selected_query):
+    if selected_query is None:
+        raise PreventUpdate  # If no value is selected, prevent updating the graph
+    
+    query_function = globals().get(selected_query)  # Get the function object from its name
+    query = query_function()  # Call the function to get the query string
+    
+    df, execution_time = fetch_data(query)
+
+    if selected_query == 'query1_1':
+        fig = px.bar(df, x='Location', y='TotalBoxOffice', color='Genre', barmode='group',
+                     title='Total Box Office by Location and Genre',
+                     labels={'TotalBoxOffice': 'Total Box Office', 'Location': 'Theater Location'})
+    elif selected_query == 'query1_2':
+        fig = px.bar(df, x='TheaterName', y='TotalBoxOffice', color='Genre', barmode='group',
+                    title='Total Box Office by Theater, Genre, and Title',
+                    labels={'TotalBoxOffice': 'Total Box Office', 'TheaterName': 'Theater Name'})
+    elif selected_query == 'query1_3':
+        fig = px.pie(df, names='Title', values='TotalBoxOffice',
+                    title='Total Box Office for R-Rated Movies by Title',
+                    labels={'TotalBoxOffice': 'Total Box Office', 'Title': 'Movie Title'})
+    elif selected_query == 'query1_4':
+        fig = px.bar(df, x='Title', y='TotalBoxOffice', color='Location',
+                    title='Total Box Office for R-Rated Movies in New York by Title',
+                    labels={'TotalBoxOffice': 'Total Box Office', 'Title': 'Movie Title', 'Location': 'Location'})
+    elif selected_query == 'query1_5':
+        fig = px.bar(df, x='Title', y=['Chicago', 'Dallas', 'Houston', 'LosAngeles', 'Miami', 'NewYork', 'Orlando', 'Philadelphia', 'SanDiego', 'SanFrancisco'],
+                    title='Total Box Office by Movie and Location',
+                    labels={'value': 'Total Box Office', 'Title': 'Movie Title', 'variable': 'Location'})
+    elif selected_query == 'query2_1':
+        fig = px.bar(df, x='AgentName', y='TotalSalary', color='Gender', barmode='group',
+                    title='Total Salary by Agent and Gender',
+                    labels={'TotalSalary': 'Total Salary', 'AgentName': 'Agent Name'})
+    elif selected_query == 'query2_2':
+        fig = px.bar(df, x='Nationality', y='TotalSalary', color='Gender', barmode='group',
+                    title='Total Salary by Nationality and Gender',
+                    labels={'TotalSalary': 'Total Salary', 'Nationality': 'Nationality'})
+    elif selected_query == 'query2_3':
+        fig = px.pie(df, names='ActorName', values='TotalSalary',
+                    title='Total Salary for American Actors by Name',
+                    labels={'TotalSalary': 'Total Salary', 'ActorName': 'Actor Name'})
+    elif selected_query == 'query2_4':
+        fig = px.bar(df, x='ActorName', y='TotalSalary', color='AgentName',
+                    title='Total Salary for American Actors Represented by Creative Artists',
+                    labels={'TotalSalary': 'Total Salary', 'ActorName': 'Actor Name', 'AgentName': 'Agent Name'})
+    elif selected_query == 'query2_5':
+        fig = px.bar(df, x='Title', y=['AngelinaJolie', 'BradPitt', 'JohnnyDepp', 'WillSmith', 'TomCruise', 'JuliaRoberts', 'ChristianBale', 'LeonardoDiCaprio', 'CateBlanchett', 'RussellCrowe', 'KeiraKnightly', 'MarionCotillard', 'MerylStreep', 'PierceBrosnan'],
+                    title='Total Salary by Movie and Actor',
+                    labels={'value': 'Total Salary', 'Title': 'Movie Title', 'variable': 'Actor'})
+    elif selected_query == 'query3_1':
+        fig = px.bar(df, x='Title', y='OverallRating',
+                    title='Overall Movie Ratings',
+                    labels={'OverallRating': 'Overall Rating', 'Title': 'Movie Title'})
+    elif selected_query == 'query3_2':
+        fig = px.bar(df, x='MovieRating', y='OverallRating', color='Genre',
+                    title='Overall Movie Ratings by Reviewer Class, Movie Rating, and Genre',
+                    labels={'OverallRating': 'Overall Rating', 'MovieRating': 'Movie Rating', 'Genre': 'Genre'})
+    elif selected_query == 'query3_3':
+        fig = px.pie(df, names='Title', values='OverallRating',
+                    title='Overall Movie Ratings for R-Rated Movies by Title',
+                    labels={'OverallRating': 'Overall Rating', 'Title': 'Movie Title'})
+    elif selected_query == 'query3_4':
+        fig = px.bar(df, x='Title', y='OverallRating', color='Genre',
+                    title='Overall Movie Ratings for R-Rated Thriller Movies by Title',
+                    labels={'OverallRating': 'Overall Rating', 'Title': 'Movie Title', 'Genre': 'Genre'})
+    elif selected_query == 'query3_5':
+        fig = px.bar(df, x='Title', y=['RogerEbert', 'KennethTuran', 'DavidAnsen', 'PeterTravers', 'AnthonyScott'],
+                    title='Overall Movie Ratings by Reviewer',
+                    labels={'value': 'Overall Rating', 'Title': 'Movie Title', 'variable': 'Reviewer'})
+    else:
+        fig = {}  # Handle invalid query selection
+    
+    query_result = html.Div([
+        html.H4(f'Query Result (Execution Time: {execution_time:.6f} seconds):'),
+        html.Table([
+            html.Thead(html.Tr([html.Th(col, style={'padding': '8px', 'background-color': '#f2f2f2', 'border': '1px solid #ddd'}) for col in df.columns])),
+            html.Tbody([
+                html.Tr([html.Td(df.iloc[i][col], style={'padding': '8px', 'border': '1px solid #ddd'}) for col in df.columns]) for i in range(len(df))
+            ])
+        ], className='table', style={'width': '100%', 'border-collapse': 'collapse'}),
+    ], className='query-result', style={'width': '80%', 'font-family': 'Arial, sans-serif', 'text-align': 'left'})
+
+    
+    return fig, query_result
 
 
-def show_graph_options(data_frame):
-    graph_window = tk.Toplevel()
-    graph_window.title("Graph Options")
-
-    def generate_graph(graph_type):
-        plt.figure()
-
-        if graph_type == "Bar Chart":
-            data_frame.plot(kind='bar', x=data_frame.columns[0], y=data_frame.columns[1:])
-        else:
-            messagebox.showerror("Error", "Unknown graph type!")
-
-        plt.show()
-
-    bar_chart_btn = ttk.Button(graph_window, text="Bar Chart", command=lambda: generate_graph("Bar Chart"))
-
-    bar_chart_btn.pack(pady=10)
-
-# Main function to create the GUI
-def main():
-    global tree
-    global runtime_label
-    global graph_button
-
-    root = tk.Tk()
-    root.title("Movie OLAP Query Interface v2")
-
-    notebook = ttk.Notebook(root)
-    notebook.pack(pady=10, expand=True)
-
-    frame1 = ttk.Frame(notebook, width=800, height=400)
-    frame2 = ttk.Frame(notebook, width=800, height=400)
-    frame3 = ttk.Frame(notebook, width=800, height=400)
-
-    frame1.pack(fill="both", expand=True)
-    frame2.pack(fill="both", expand=True)
-    frame3.pack(fill="both", expand=True)
-
-    notebook.add(frame1, text="Movie Box Office Analysis")
-    notebook.add(frame2, text="Actor Salary Analysis")
-    notebook.add(frame3, text="Movie Rating Analysis")
-
-    tree_frame = ttk.Frame(root)
-    tree_frame.pack(pady=10, fill="both", expand=True)
-
-    # Creating a Treeview widget
-    tree = ttk.Treeview(tree_frame)
-    tree.pack(side="left", fill="both", expand=True)
-
-    # Adding scrollbars
-    tree_scroll_y = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
-    tree_scroll_y.pack(side="right", fill="y")
-
-    tree.configure(yscrollcommand=tree_scroll_y.set)
-
-    # Label to display runtime
-    runtime_label = ttk.Label(root, text="")
-    runtime_label.pack()
-
-   # Button to display graphs
-    graph_button = ttk.Button(root, text="Show Graphs", state=tk.DISABLED, command=lambda: show_graph_options(graph_button.data_frame))
-    graph_button.pack(pady=5)
-
-    # Creating labels and buttons for Frame 1 (Movie Box Office Analysis)
-    queries1 = [
-        ("Box Office by Genre and Location", query1_1),
-        ("Box Office by Location, Theater, Genre, and Title", query1_2),
-        ("Box Office for R-rated Movies by Title", query1_3),
-        ("Box Office for R-rated Movies in New York", query1_4),
-        ("Box Office for Titles in Various Cities", query1_5),
-    ]
-
-    for idx, (label_text, command) in enumerate(queries1):
-        label = ttk.Label(frame1, text=label_text)
-        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
-
-        button = ttk.Button(frame1, text="Run Query", command=command)
-        button.grid(row=idx, column=1, padx=10, pady=5)
-
-    # Creating labels and buttons for Frame 2 (Actor Salary Analysis)
-    queries2 = [
-        ("Total Salary by Agent and Gender", query2_1),
-        ("Total Salary by Gender, Nationality, and Agent", query2_2),
-        ("Total Salary for American Actors by Name", query2_3),
-        ("Total Salary for American Actors by Agent", query2_4),
-        ("Salary for Specific Actors by Movie Title", query2_5),
-    ]
-
-    for idx, (label_text, command) in enumerate(queries2):
-        label = ttk.Label(frame2, text=label_text)
-        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
-
-        button = ttk.Button(frame2, text="Run Query", command=command)
-        button.grid(row=idx, column=1, padx=10, pady=5)
-
-    # Creating labels and buttons for Frame 3 (Movie Rating Analysis)
-    queries3 = [
-        ("Overall Rating by Movie Title", query3_1),
-        ("Rating by Reviewer Class, Movie Rating, and Genre", query3_2),
-        ("Rating for R-rated Movies by Title", query3_3),
-        ("Rating for R-rated Thriller Movies by Title", query3_4),
-        ("Rating by Reviewer and Movie Title", query3_5),
-    ]
-
-    for idx, (label_text, command) in enumerate(queries3):
-        label = ttk.Label(frame3, text=label_text)
-        label.grid(row=idx, column=0, padx=10, pady=5, sticky="w")
-
-        button = ttk.Button(frame3, text="Run Query", command=command)
-        button.grid(row=idx, column=1, padx=10, pady=5)
-
-    root.mainloop()
-
-# Run the GUI
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
