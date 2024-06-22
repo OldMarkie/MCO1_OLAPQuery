@@ -340,7 +340,7 @@ def fetch_data(query):
         'database': 'movieopt'
     }
     
-    start_time = time.time()
+   
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
@@ -348,6 +348,7 @@ def fetch_data(query):
     for table in TEMP_TABLES:
         cursor.execute(table)
         
+    start_time = time.time()
     df = pd.read_sql(query, conn)
     conn.close()
     end_time = time.time()
