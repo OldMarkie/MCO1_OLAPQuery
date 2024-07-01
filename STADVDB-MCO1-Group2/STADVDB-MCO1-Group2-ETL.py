@@ -540,83 +540,86 @@ def insert_showing_data(conn, data):
     finally:
         cursor.close()
 
-# Main function
+def get_row_count(conn, table):
+    cursor = conn.cursor()
+    query = f"SELECT COUNT(*) FROM {table};"
+    cursor.execute(query)
+    row_count = cursor.fetchone()[0]
+    cursor.close()
+    return row_count
+
+def compare_row_counts(conn_source, conn_target, source_tables, target_tables):
+    print('-------------------------------------')
+    print('For Functional Testing')
+    print('-------------------------------------')
+    for source_table, target_table in zip(source_tables, target_tables):
+        source_count = get_row_count(conn_source, source_table)
+        target_count = get_row_count(conn_target, target_table)
+        if source_count != target_count:
+            print(f"Row counts for table {source_table} and {target_table} differ:")
+            print(f"Source count: {source_count}")
+            print(f"Target count: {target_count}")
+        else:
+            print(f"Row counts for table {source_table} and {target_table} are equal: {source_count}")
+# Main function to handle ETL process
 def main():
-    conn_target = None
     try:
-        # Connect to MySQL source database (moviedb)
-        conn_source = mysql.connector.connect(
+        # Establishing connection
+        source_conn = mysql.connector.connect(
             host='localhost',
             user='root',
             password='password',
             database='moviedb'
         )
-
-        # Fetch and transform data for agents
-        agent_data = fetch_and_transform_agent_data(conn_source)
-
-        # Fetch and transform data for directors
-        director_data = fetch_and_transform_director_data(conn_source)
-
-        # Fetch and transform data for actors
-        actor_data = fetch_and_transform_actor_data(conn_source)
-
-        # Fetch and transform data for distributors
-        distributor_data = fetch_and_transform_distributor_data(conn_source)
-
-        # Fetch and transform data for reviewers
-        reviewer_data = fetch_and_transform_reviewer_data(conn_source)
-
-        # Fetch and transform data for theaters
-        theater_data = fetch_and_transform_theater_data(conn_source)
-
-        # Fetch and transform data for movies
-        movie_data = fetch_and_transform_movie_data(conn_source)
-
-        # Fetch and transform data for movie casts
-        moviecast_data = fetch_and_transform_moviecast_data(conn_source)
-
-        # Fetch and transform data for movie genres
-        moviegenre_data = fetch_and_transform_moviegenre_data(conn_source)
-
-        # Fetch and transform data for movie reviews
-        moviereview_data = fetch_and_transform_moviereview_data(conn_source)
-
-        # Fetch and transform data for showings
-        showing_data = fetch_and_transform_showing_data(conn_source)
-
-        # Close source connection
-        conn_source.close()
-
-        # Connect to MySQL target database (movieOpt)
-        conn_target = mysql.connector.connect(
+        
+        destination_conn = mysql.connector.connect(
             host='localhost',
             user='root',
             password='password',
-            database='movieOpt'
+            database='movieoptv3'
         )
+        
+        # Fetch and transform data from source
+        agent_data = fetch_and_transform_agent_data(source_conn)
+        director_data = fetch_and_transform_director_data(source_conn)
+        actor_data = fetch_and_transform_actor_data(source_conn)
+        distributor_data = fetch_and_transform_distributor_data(source_conn)
+        movie_data = fetch_and_transform_movie_data(source_conn)
+        moviecast_data = fetch_and_transform_moviecast_data(source_conn)
+        moviereview_data = fetch_and_transform_moviereview_data(source_conn)
+        reviewer_data = fetch_and_transform_reviewer_data(source_conn)
+        showing_data = fetch_and_transform_showing_data(source_conn)
+        theater_data = fetch_and_transform_theater_data(source_conn)
 
-        # Insert data into dimension tables
-        insert_agent_data(conn_target, agent_data)
-        insert_director_data(conn_target, director_data)
-        insert_actor_data(conn_target, actor_data)
-        insert_distributor_data(conn_target, distributor_data)
-        insert_reviewer_data(conn_target, reviewer_data)
-        insert_theater_data(conn_target, theater_data)
-       
-        # Insert data into fact tables
-        insert_movie_data(conn_target, movie_data)
-        insert_moviecast_data(conn_target, moviecast_data)
-        insert_moviereview_data(conn_target, moviereview_data)
-        insert_showing_data(conn_target, showing_data)
+        # Insert data into destination
+        print('-------------------------------------')
+        print('Inserting')
+        print('-------------------------------------')
+        insert_agent_data(destination_conn, agent_data)
+        insert_director_data(destination_conn, director_data)
+        insert_actor_data(destination_conn, actor_data)
+        insert_distributor_data(destination_conn, distributor_data)
+        insert_movie_data(destination_conn, movie_data)
+        insert_moviecast_data(destination_conn, moviecast_data)
+        insert_moviereview_data(destination_conn, moviereview_data)
+        insert_reviewer_data(destination_conn, reviewer_data)
+        insert_showing_data(destination_conn, showing_data)
+        insert_theater_data(destination_conn, theater_data)
+
+        source_tables = ['agent', 'director', 'actor', 'distributor', 'reviewer', 'theater', 'movie', 'moviecast', 'moviereviews', 'showing']
+        target_tables = ['dimagent', 'dimdirector', 'dimactor', 'dimdistributor', 'dimreviewer', 'dimtheater', 'factmovie', 'factmoviecast', 'factmoviereview', 'factshowing']
+
+        compare_row_counts(source_conn, destination_conn, source_tables, target_tables)
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")
-    
     finally:
-        if conn_target and conn_target.is_connected():
-            conn_target.close()
-            print("MySQL connection is closed.")
+        # Closing connections
+        if source_conn.is_connected():
+            source_conn.close()
+        if destination_conn.is_connected():
+            destination_conn.close()
 
+# Execute the main function
 if __name__ == "__main__":
     main()
