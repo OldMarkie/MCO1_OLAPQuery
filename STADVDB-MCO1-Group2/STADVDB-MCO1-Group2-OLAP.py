@@ -337,7 +337,7 @@ def fetch_data(query):
         'user': 'root',
         'password': 'password',
         'host': 'localhost',
-        'database': 'movieopt'
+        'database': 'movieoptv3'
     }
     
    
